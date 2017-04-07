@@ -1,0 +1,176 @@
+1:
+//Pre: ord(v,0,n) && ord(w,0,m) && 0 <= n <= longitud(v) 
+//&& 0<=m <= longitud(w) && n >= m >= n/2
+bool contenido(int v[],int w[], int n,int m)
+{ bool b=true;int i=0,j=0;
+//INV: 0 <= i <= n && 0 <= j<= m && ord(v,0,n) && ord(w,0,m) &&
+// j<m -> forall z:0 <=z <i: v[z]<w[j] && 
+//b = forall k: 0 <= k <j :(exists l: 0 <= l <n :w[k]=v[l])
+  while (b && (i<n) && (j<m))
+   {
+    if (v[i]==w[j]) {i=i+1;j=j+1;}
+    else if (v[i]<w[j]) {i=i+1;}
+    else {b=false;j=j+1;}
+   }
+   b=b&&(j==m);
+   return b;
+}
+//Post: b = forall k: 0 <= k <m :(exists l: 0 <= l <n :w[k]=v[l])
+
+---------------------------------------------------------
+
+2:
+int progresion(int v[],int d,int c,int f)
+{int r;
+ if (f==c+1) //dos elementos 
+   {r=v[c]+d;}
+ else //tres o mas elementos
+   {int m =(c+f)/2; //el caso tres y cuatro elementos estan cubiertos aqui como caso base
+       // cinco o mas elementos generan casos de dos o mas elementos
+       //si no ponen estas condiciones tienen que incluir el caso base de 1 elemento, si no recursion infinita
+       //y ademas tienen que incluir el m en la primera llamada porque no han podido discriminarle
+    if (v[m+1]-v[m]!=d) {r=v[m]+d;}
+    else if (v[m]-v[m-1]!=d) {r=v[m-1]+d;}
+    else 
+      if (v[m] > v[c]+(m-c)*d) //es mayor de lo que le corresponde, lo que falta esta a la izquierda
+          //o lo que es lo mismo v[m]>v[0]+m*d
+        {r=progresion(v,d,c,m-1);}
+      else //es lo que le corresponde, lo que falta esta a la derecha
+        {r=progresion(v,d,m+1,f);}  
+   };
+ return r;
+}
+
+-------------------------------------------------------
+
+3:
+void TramosNavegEmbalse(Arbin<int> const&a, int &nivel, int &tramos) {
+    if (a.esVacio()) {nivel=0;tramos=0;} //para el caso de que un hijo no exista
+    else if (a.hijoDr().esVacio() && a.hijoIz().esVacio()) {
+        nivel = 1;
+        tramos=0;
+    }
+    else {
+        int nivelIz, nivelDr, tramosIz, tramosDr;
+        
+        TramosNavegEmbalse(a.hijoIz(), nivelIz, tramosIz);
+        TramosNavegEmbalse(a.hijoDr(), nivelDr, tramosDr);
+        
+        nivel = nivelIz + nivelDr+a.raiz();
+        if (nivel<0) {nivel=0;}
+        tramos = tramosIz + tramosDr;
+        
+        if (nivelIz >= 3)
+            tramos++;        
+        if (nivelDr >= 3)
+            tramos++;
+    }
+}
+
+-----------------------------------------------------
+
+4:
+
+a)
+// Añade una cancion a la lista de reproduccion
+// Coste constante
+
+// Elimina una cancion del ipud
+// Coste lineal en el maximo entre el numero de canciones en la lista de reproduccion
+// y el numero de canciones en la lista de reproducidas
+
+// Registra la reproduccion de una cancion
+// Coste lineal en el numero de canciones en la lista de reproducidas
+void iPud::play(){
+	if (!playlist.empty()) {
+		songs[playlist.front()].inPlaylist = false; // Deja de estar en la cola de reproduccion
+        if (songs[playlist.front()].played) //eliminar reproduccion mas antigua
+            
+        {
+            List<Cancion>::Iterator it = played.begin();
+            while (*it != playlist.front()) ++it; // La cancion siempre esta en la lista
+            played.erase(it);
+        }
+        
+        songs[playlist.front()].played = true; // Pasa a estar en la cola de reproducidas
+		played.push_front(playlist.front()); // Se añade a la cola de reproducidas
+		duration -= songs[playlist.front()].duration;
+		playlist.pop_front(); // Se elimina de la cola de reproduccion
+	}
+}
+
+// devuelve la siguiente cancion de la cola de reproduccion
+// Coste constante
+
+// Devuelve el tiempo total de la lista de reproduccion
+// Coste constante
+
+// Obtiene la lista de canciones ya reproducidas
+// Coste lineal en el maximo entre n y el numero de canciones de la lista de reproducidas.
+
+
+b)
+class iPud {
+	static List<Cancion> playlist;
+	static List<Cancion> played;
+	struct SongInfo {
+		Artista artist;
+		int duration;
+		List<Cancion>::Iterator itplaylist = playlist.end();
+		List<Cancion>::Iterator itplayed = played.end();
+	};
+	HashMap < Cancion,SongInfo > songs;
+	int duration;
+}    
+
+
+// Añade una cancion al ipud.
+// Coste constante
+// Modificaciones. Se inicializan los campos lista y reproducida al final de las listas
+
+// Añade una cancion a la lista de reproduccion
+// Coste constante
+// Modificaciones. Se da la vuelta a la cola. Ahora la ultima cancion aparece en primer lugar
+// Se actualiza el campo lista con el primero de la cola (el añadido)
+
+// Elimina una cancion del ipud
+// Coste constante
+// Modificaciones. Se borra el elemento apuntado por el iterador en ambas
+// listas en lugar de recorrerlas
+void iPud::deleteSong(Cancion const& c){
+	if (songs.contains(c)) {
+		// elimina de la cola de reproduccion
+		if (songs.at(c).itplaylist != playlist.end()) {
+			playlist.erase(songs.at(c).itplaylist);
+			duration -= songs.at(c).duration;
+		}
+		// elimina de la cola de reproducidas
+		else if (songs.at(c).itplayed != played.end()) {
+			played.erase(songs.at(c).itplayed);
+		}
+		// Elimina de la tabla de canciones
+		songs.erase(c);
+	}
+}
+
+// Registra la reproduccion de una cancion
+// Coste constante
+// Modificaciones: Se actualizan los campos con los iteradores y se tiene en
+// cuenta que se dio la vuelta a la lista
+
+-----------------------------------------------------
+
+5:
+
+1) d
+
+2a) O(n*n) en tpo y O(n) en espacio 
+2b) O(n*logn) en tpo y O(n) en espacio
+
+3) d
+
+4) a
+
+5) Ver dibujo del tema 10
+
+Preguntad en tutorías si queréis más detalles

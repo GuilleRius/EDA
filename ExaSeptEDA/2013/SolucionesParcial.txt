@@ -1,0 +1,229 @@
+1:
+void TramosNavegEmbalse(Arbin<int> const&a, int &nivel, int &tramos) {
+    if (a.esVacio()) {nivel=0;tramos=0;} //para el caso de que un hijo no exista
+    else if (a.hijoDr().esVacio() && a.hijoIz().esVacio()) {
+        nivel = 1;
+        tramos=0;
+    }
+    else {
+        int nivelIz, nivelDr, tramosIz, tramosDr;
+        
+        TramosNavegEmbalse(a.hijoIz(), nivelIz, tramosIz);
+        TramosNavegEmbalse(a.hijoDr(), nivelDr, tramosDr);
+        
+        nivel = nivelIz + nivelDr+a.raiz();
+        if (nivel<0) {nivel=0;}
+        tramos = tramosIz + tramosDr;
+        
+        if (nivelIz >= 3)
+            tramos++;        
+        if (nivelDr >= 3)
+            tramos++;
+    }
+}
+-----------------------------------------------------
+
+2:
+    void sumarUno (Nodo*& p, const T2 & v){
+        Nodo* aux = p;
+        while (aux != NULL && aux->_info2 != v) {
+            aux = aux->_sig;
+        }
+        // Ha encontrado el valor
+        if (aux != NULL) {
+            Nodo * act = aux;  // guarda el nodo
+            aux = aux->_sig;  // pasa al siguiente para seguir recorriendo
+            // quita el nodo de la lista
+            if (act != p) { // No es el primero
+                act->_ant->_sig = act->_sig;
+                act->_sig->_ant = act->_ant;
+            }
+            else { // es el primer nodo
+                p = aux;
+                aux->_ant = NULL;
+            }
+            // Busca su nuevo sitio
+            while (aux != NULL && aux->_info1 == act->_info1)
+                aux = aux->_sig;
+            // Lo añade en su sitio
+	    act->_info1++;
+            if (aux == NULL) { // se añade al final de la lista
+                _ult->_sig = act;
+                act->_sig = NULL;
+                act->_ant = _ult;
+                _ult = act;
+            }
+            else { // No se coloca el ultimo
+                act->_ant = aux->_ant;
+                aux ->_ant->_sig = act;
+                act->_sig = aux;
+                aux->_ant = act;
+            }
+        }
+------------------------------------------------------------
+3:
+
+a)
+// Añade una cancion a la lista de reproduccion
+// Coste constante
+
+// Elimina una cancion del ipud
+// Coste lineal en el maximo entre el numero de canciones en la lista de reproduccion
+// y el numero de canciones en la lista de reproducidas
+
+// Registra la reproduccion de una cancion
+// Coste lineal en el numero de canciones en la lista de reproducidas
+void iPud::play(){
+	if (!playlist.empty()) {
+		songs[playlist.front()].inPlaylist = false; // Deja de estar en la cola de reproduccion
+        if (songs[playlist.front()].played) //eliminar reproduccion mas antigua
+            
+        {
+            List<Cancion>::Iterator it = played.begin();
+            while (*it != playlist.front()) ++it; // La cancion siempre esta en la lista
+            played.erase(it);
+        }
+        
+        songs[playlist.front()].played = true; // Pasa a estar en la cola de reproducidas
+		played.push_front(playlist.front()); // Se añade a la cola de reproducidas
+		duration -= songs[playlist.front()].duration;
+		playlist.pop_front(); // Se elimina de la cola de reproduccion
+	}
+}
+
+// devuelve la siguiente cancion de la cola de reproduccion
+// Coste constante
+
+// Devuelve el tiempo total de la lista de reproduccion
+// Coste constante
+
+// Obtiene la lista de canciones ya reproducidas
+// Coste maximo entre n y el numero de canciones el la lista de reproducidas.
+
+b)
+class iPud {
+	static List<Cancion> playlist;
+	static List<Cancion> played;
+	struct SongInfo {
+		Artista artist;
+		int duration;
+		List<Cancion>::Iterator itplaylist = playlist.end();
+		List<Cancion>::Iterator itplayed = played.end();
+	};
+	HashMap < Cancion,SongInfo > songs;
+	int duration;
+}    
+
+
+// Añade una cancion al ibub.
+// Coste constante
+// Modificaciones. Se inicializan los campos lista y reproducida al final de las listas
+
+// Añade una cancion a la lista de reproduccion
+// Coste constante
+// Modificaciones. Se da la vuelta a la cola. Ahora la ultima cancion aparece en primer lugar
+// Se actualiza el campo lista con el primero de la cola (el añadido)
+
+// Elimina una cancion del ipud
+// Coste constante
+// Modificaciones. Se borra el elemento apuntado por el iterador en ambas
+// listas en lugar de recorrerlas
+void iPud::deleteSong(Cancion const& c){
+	if (songs.contains(c)) {
+		// elimina de la cola de reproduccion
+		if (songs.at(c).itplaylist != playlist.end()) {
+			playlist.erase(songs.at(c).itplaylist);
+			duration -= songs.at(c).duration;
+		}
+		// elimina de la cola de reproducidas
+		else if (songs.at(c).itplayed != played.end()) {
+			played.erase(songs.at(c).itplayed);
+		}
+		// Elimina de la tabla de canciones
+		songs.erase(c);
+	}
+}
+
+// Registra la reproduccion de una cancion
+// Coste constante
+// Modificaciones: Se actualizan los campos con los iteradores y se tiene en
+// cuenta que se dio la vuelta a la lista
+
+c)
+Lo que seguro que habría que hacer es añadir un
+
+HashMap<string,List<string>> playlists; 
+
+para guardar las distintas playlists. Con esto:
+
+  * saveCurrentList: Tendría que insertar en playlists una copia de
+    playlist (la copia la veo inevitable...). Coste lineal en el
+    tamaño de playlist.
+
+  * setPlaylist: Tendría que destruir playlist (cosa que haría la
+    propia asignación) y copiar la lista especificada. Coste lineal en
+    el máximo entre el tamaño de playlist y el tamaño de la lista
+    especificada.
+
+  * generateArtistList: Si no hacemos nada más, tendría que recorrer
+    toda la tabla songs y ir generando la nueva lista. Esto sería
+    lineal en el número de canciones total. Como nos piden minimizar
+    costes habría que añadir una nueva tabla
+
+      HashMap<string,HashMap<string,Nada>> songsPerArtist;
+
+    con las canciones de cada artista. Esto afectaría a addSong y a
+    deleteSong, que ahora tendrían que actualizar la información de la
+    tabla del artista de la canción añadida o borrada, pero sus costes
+    no se verían penalizados.
+
+  * El resto de operaciones no se ven afectadas excepto deleteSong,
+    que ahora tiene que borrar la canción de todas las listas de
+    reproducción. Sin hacer nada extra su coste pasaría a ser lineal
+    en la suma de las longitudes de todas las listas de playlists (o el
+    correspondiente producto). Esto se podría mejorar añadiendo otra
+    tabla HashMap<string,Nada> a cada canción para saber en qué listas
+    está, en cuyo caso el coste pasaría a ser lineal en la suma de las
+    longitudes de todas las listas en las que está la canción. Y ya
+    que estamos, usando la idea del apartado b), si esta tabla guarda
+    Iterators en lugar de Nadas, entonces ya solo sería lineal en el
+    número de listas en las que está la canción. Con esto
+    saveCurrentList tendría que recorrer la lista para añadir a cada
+    SongInfo su nuevo iterador a la lista que se guarda, pero ese
+    coste lineal ya lo teníamos igualmente.
+
+
+Implementación de generateArtistList
+
+Si existe una entrada en songsPerArtist para el artista, hay que
+partir de una lista vacía l, recorrer la tabla de las canciones del
+artista proporcionado, y irlas añadiendo a la lista l. Finalmente hay
+que insertar el par <artista,l> a la tabla playlists.
+
+void IPud::generateArtistList(string a){
+  if (songsPerArtist.contains(a)){
+    List<string> l;
+    Iterator it = songsPerArtist[a].cbegin();
+    while (it != songsPerArtist[a].cend()){
+      l->push_back(*it);
+      it++;
+    }
+    playlists.insert(a,l); 
+  }
+}
+
+-----------------------------------------------------
+
+4:
+
+1) d
+
+2a) O(n*n) en tpo y O(n) en espacio 
+2b) O(n*logn) en tpo y O(n) en espacio
+
+3) d
+
+4) a
+
+5) Ver dibujo del tema 10
+
